@@ -1,7 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("#ip-form");
+  const input = document.querySelector("#ip-input");
 
   form.addEventListener("submit", formSended);
+  input.addEventListener("click", () => input.value = '');
 });
 
 const formSended = (e) => {
@@ -25,7 +27,6 @@ const searchIp = async (ip) => {
     }
 
     const result = await response.json();
-    console.log(result);
     showResults(result, ip, isValid);
   } catch (error) {
     showResults(error.message, ip, isValid);
@@ -35,9 +36,11 @@ const searchIp = async (ip) => {
 const showResults = (answer, ip, isValid) => {
   const result = document.querySelector(".res-info");
 
-  if(!isValid) {
+  if (!isValid) {
     result.innerHTML = `<h2>Not Found</h2>
     <div>This isn't a valid IP: <strong>${ip}</strong></div>`;
+
+    showMap(answer);
     return;
   }
 
@@ -60,20 +63,57 @@ const showResults = (answer, ip, isValid) => {
     <h3>🌐 Network</h3>
     <ul>
       <li><strong>CIDR:</strong> ${answer.network.cidr}</li>
-      <li><strong>Host range:</strong> ${answer.network.hosts.start} - ${answer.network.hosts.end}</li>
+      <li><strong>Host range:</strong> ${answer.network.hosts.start} - ${
+    answer.network.hosts.end
+  }</li>
     </ul>
 
     <h3>🏢 Autonomous System</h3>
     <ul>
       <li><strong>ASN:</strong> ${answer.network.autonomous_system.asn}</li>
       <li><strong>Name:</strong> ${answer.network.autonomous_system.name}</li>
-      <li><strong>Organization:</strong> ${answer.network.autonomous_system.organization}</li>
+      <li><strong>Organization:</strong> ${
+        answer.network.autonomous_system.organization
+      }</li>
     </ul>
   `;
 
-//   showMap(answer);
+  showMap(answer);
 };
 
 const showMap = (answer) => {
+  const mapResult = document.querySelector(".res-map");
 
-}
+  if(answer == '') return;
+
+  const lat = answer.location.latitude;
+  const lon = answer.location.longitude;
+
+  const delta = 0.08;
+  const left = lon - delta;
+  const bottom = lat - delta;
+  const right = lon + delta;
+  const top = lat + delta;
+
+  const src =
+    `https://www.openstreetmap.org/export/embed.html?` +
+    `bbox=${left}%2C${bottom}%2C${right}%2C${top}` +
+    `&layer=mapnik` +
+    `&marker=${lat}%2C${lon}`;
+
+    mapResult.innerHTML = `
+    <iframe
+      width="100%"
+      height="300"
+      frameborder="0"
+      scrolling="no"
+      src="${src}"
+      style="border: 1px solid #ccc; border-radius: 10px;"
+    ></iframe>
+    <small>
+      <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=14/${lat}/${lon}" target="_blank" rel="noopener">
+        Ver mapa más grande
+      </a>
+    </small>
+  `;
+};
